@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from logistics import models
-
 
 class RequestCategorySerializer(serializers.Serializer):
     name = serializers.CharField()

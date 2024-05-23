@@ -3,9 +3,10 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from logistics.exceptions import LogisticsNotFoundException, CategoryNotFoundException
-from logistics.serializers.logistics_serializers import *
-from logistics.services.logistics_service import LogisticsService
+from ..exceptions import LogisticsNotFoundException, CategoryNotFoundException
+from ..serializers.logistics_serializers import *
+from ..services.logistics_service import LogisticsService
+from ..repositories import create_database, LogisticsRepository
 
 
 @extend_schema_view(
@@ -51,7 +52,9 @@ from logistics.services.logistics_service import LogisticsService
     )
 )
 class LogisticsViewSet(viewsets.ModelViewSet):
-    logistics_service = LogisticsService()
+    logistics_db_path = create_database()
+    logistics_repository = LogisticsRepository(db_path=logistics_db_path)
+    logistics_service = LogisticsService(logistics_repository)
 
     @action(detail=False, methods=["POST"])
     def post_logistics(self, request):

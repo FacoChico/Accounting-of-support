@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from logistics.serializers.category_serializers import PaginationSerializer
+from .category_serializers import PaginationSerializer
 
 
 class RequestLogisticsSerializer(serializers.Serializer):

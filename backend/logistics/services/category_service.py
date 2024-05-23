@@ -1,16 +1,19 @@
-from logistics.exceptions import CategoryAlreadyExistsException, CategoryNotFoundException
-from logistics.models import Category
+from ..exceptions import CategoryAlreadyExistsException, CategoryNotFoundException
+from ..models import Category
+from ..repositories.category_repository import CategoryRepository
 
 
 class CategoryService:
 
-    @staticmethod
-    def get_all_categories(limit: int = 10, offset: int = 0) -> tuple[list[Category], int]:
+    def __init__(self, repository: CategoryRepository):
+        self.repo = repository
+
+    def get_all_categories(self, limit: int = 10, offset: int = 0) -> tuple[list[Category], int]:
         categories: list[Category] = []
         total: int = 0
         try:
-            all_categories = Category.objects.all()
-            total = all_categories.count()
+            all_categories = self.repo.get_all()
+            total = len(all_categories)
             for i in range(offset, offset + limit):
                 categories.append(all_categories[i])
         except IndexError:
@@ -18,37 +21,28 @@ class CategoryService:
 
         return categories, total
 
-    @staticmethod
-    def create_category(category_name: str) -> Category:
-        if Category.objects.filter(name=category_name).exists():
+    def create_category(self, category_name: str) -> Category:
+        if self.repo.get_by_name(category_name):
             raise CategoryAlreadyExistsException
 
-        category = Category(name=category_name)
-        category.save()
+        return self.repo.add(category_name)
+
+    def get_category_by_id(self, category_id: int) -> Category:
+        category = self.repo.get_by_id(category_id)
+        if category is None:
+            raise CategoryNotFoundException
         return category
 
-    @staticmethod
-    def get_category_by_id(category_id: int) -> Category:
-        try:
-            return Category.objects.get(pk=category_id)
-        except Category.DoesNotExist:
+    def edit_category_by_id(self, category_id: int, name: str) -> Category:
+        category_to_change = self.repo.update(category_id, name)
+        if not category_to_change:
             raise CategoryNotFoundException
 
-    @staticmethod
-    def edit_category_by_id(category_id: int, name: str) -> Category:
-        try:
-            category_to_change = Category.objects.get(pk=category_id)
-            category_to_change.name = name
-            category_to_change.save()
-            return category_to_change
-        except Category.DoesNotExist:
+        return category_to_change
+
+    def delete_category_by_id(self, category_id: int) -> Category:
+        category_to_delete = self.repo.delete(category_id)
+        if not category_to_delete:
             raise CategoryNotFoundException
 
-    @staticmethod
-    def delete_category_by_id(category_id: int) -> Category:
-        try:
-            category_to_delete = Category.objects.get(pk=category_id)
-            category_to_delete.delete()
-            return category_to_delete
-        except Category.DoesNotExist:
-            raise CategoryNotFoundException
+        return category_to_delete
