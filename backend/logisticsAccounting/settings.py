@@ -9,7 +9,7 @@ SECRET_KEY = "django-insecure-$^n2muq)#+ddm3udegzd196*$xi(^y_)y*0h*jb3&f8y&2ywlh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -45,9 +45,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = "logisticsAccounting.urls"
 

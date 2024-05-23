@@ -1,19 +1,20 @@
-from logistics.exceptions import LogisticsNotFoundException, CategoryNotFoundException
-from logistics.models import Logistics, Category
+from ..exceptions import LogisticsNotFoundException, CategoryNotFoundException
+from ..models import Logistics
+from ..repositories import LogisticsRepository
 
 
 class LogisticsService:
-    @staticmethod
-    def get_all_logistics(limit: int = 10, offset: int = 0, category_id: int = None) -> tuple[list[Logistics], int]:
+    def __init__(self, repo: LogisticsRepository):
+        self.repo = repo
+
+    def get_all_logistics(self, limit: int = 10, offset: int = 0,
+                          category_id: int = None) -> tuple[list[Logistics], int]:
         logistics: list[Logistics] = []
         total: int = 0
         try:
-            if category_id is not None:
-                all_logistics = Logistics.objects.filter(category_id=category_id)
-            else:
-                all_logistics = Logistics.objects.all()
+            all_logistics = self.repo.get_all(category_id=category_id)
 
-            total = all_logistics.count()
+            total = len(all_logistics)
             for i in range(offset, offset + limit):
                 logistics.append(all_logistics[i])
         except IndexError:
@@ -21,46 +22,34 @@ class LogisticsService:
 
         return logistics, total
 
-    @staticmethod
-    def create_logistics(name: str, category_id: int, type: str, price: int, quantity_available: int) -> Logistics:
-        try:
-            category = Category.objects.get(pk=category_id)
-            logistics = Logistics(name=name, category=category,
-                                  type=type, price=price, quantity_available=quantity_available)
-            logistics.save()
-            return logistics
-        except Category.DoesNotExist:
+    def create_logistics(self, name: str, category_id: int,
+                         type: str, price: int, quantity_available: int) -> Logistics:
+        category = self.repo.get_category(category_id)
+        if category is None:
             raise CategoryNotFoundException
+        logistics = self.repo.add(name=name, category_id=category_id,
+                              type=type, price=price, quantity_available=quantity_available)
+        return logistics
 
-    @staticmethod
-    def get_logistics_by_id(logistics_id: int) -> Logistics:
-        try:
-            return Logistics.objects.get(pk=logistics_id)
-        except Logistics.DoesNotExist:
+    def get_logistics_by_id(self, logistics_id: int) -> Logistics:
+        logistics = self.repo.get_by_id(logistics_id)
+        if logistics is None:
             raise LogisticsNotFoundException
+        return logistics
 
-    @staticmethod
-    def edit_logistics_by_id(logistics_id: int, name: str, category_id: int,
+    def edit_logistics_by_id(self, logistics_id: int, name: str, category_id: int,
                              type: str, price: int, quantity_available: int) -> Logistics:
-        try:
-            logistics_to_change = Logistics.objects.get(pk=logistics_id)
-            logistics_to_change.name = name
-            logistics_to_change.category = Category.objects.get(pk=category_id)
-            logistics_to_change.type = type
-            logistics_to_change.price = price
-            logistics_to_change.quantity_available = quantity_available
-            logistics_to_change.save()
-            return logistics_to_change
-        except Logistics.DoesNotExist:
-            raise LogisticsNotFoundException
-        except Category.DoesNotExist:
+        if self.repo.get_category(category_id) is None:
             raise CategoryNotFoundException
-
-    @staticmethod
-    def delete_logistics_by_id(logistics_id: int) -> Logistics:
-        try:
-            logistics_to_delete = Logistics.objects.get(pk=logistics_id)
-            logistics_to_delete.delete()
-            return logistics_to_delete
-        except Logistics.DoesNotExist:
+        logistics_to_change = self.repo.update(logistics_id, name=name, category_id=category_id,
+                         type=type, price=price, quantity_available=quantity_available)
+        if logistics_to_change is None:
             raise LogisticsNotFoundException
+        return logistics_to_change
+
+    def delete_logistics_by_id(self, logistics_id: int) -> Logistics:
+        logistics_to_delete = self.repo.delete(logistics_id)
+        if logistics_to_delete is None:
+            raise LogisticsNotFoundException
+        return logistics_to_delete
+

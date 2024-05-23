@@ -4,9 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from logistics.exceptions import CategoryNotFoundException, CategoryAlreadyExistsException
-from logistics.serializers.category_serializers import *
-from logistics.services.category_service import CategoryService
+from ..exceptions import CategoryNotFoundException, CategoryAlreadyExistsException
+from ..serializers.category_serializers import *
+from ..services.category_service import CategoryService
+from ..repositories import create_database, CategoryRepository
 
 
 @extend_schema_view(
@@ -54,7 +55,9 @@ from logistics.services.category_service import CategoryService
     )
 )
 class CategoryViewSet(ViewSet):
-    category_service = CategoryService()
+    category_db_path = create_database()
+    category_repository = CategoryRepository(db_path=category_db_path)
+    category_service = CategoryService(category_repository)
 
     @action(detail=False, methods=["POST"])
     def post_category(self, request):
