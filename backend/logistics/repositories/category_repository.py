@@ -1,6 +1,6 @@
 import sqlite3
+
 from ..models import Category
-from .db_sqlite import execute_query
 
 
 class CategoryRepository:
@@ -8,7 +8,9 @@ class CategoryRepository:
         self.db_path = db_path
 
     def _connect(self):
-        return sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
     def add(self, name: str) -> Category:
         conn = self._connect()

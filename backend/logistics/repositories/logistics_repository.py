@@ -9,7 +9,9 @@ class LogisticsRepository:
         self.category_repo = CategoryRepository(db_path)
 
     def _connect(self):
-        return sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
     def add(self, name: str, category_id: int, type: str,
             price: int = 0, quantity_available: int = 0) -> Logistics | None:
