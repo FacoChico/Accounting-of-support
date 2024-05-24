@@ -1,6 +1,6 @@
 import sqlite3
+
 from django.conf import settings
-from typing import Any
 
 db_name: str = 'db.sqlite3'
 
